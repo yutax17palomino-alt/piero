@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAYMI Lima - Vida Nocturna</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* Variables para facilitar el cambio de color */
+        :root {
+            --dark-bg: #1e1e2f;
+            --card-bg: #29293e;
+            --primary-color: #9b59b6; /* Un púrpura vibrante para botones/destacados */
+            --text-light: #f0f0f0;
+            --text-secondary: #aaaaaa;
+            --rating-color: #ffc107;
+            --detail-icon-color: #f1c40f; /* Color para los nuevos iconos de detalles */
+        }
+
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Encabezado y Barra de Búsqueda */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin: 0 auto;
+            width: 90%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-bar input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            padding: 10px 15px;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        /* Estilo para el placeholder */
+        .search-bar input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .search-bar button {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .search-bar button:hover {
+            color: var(--primary-color);
+        }
+
+        /* Sección de Título */
+        .section-title {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        /* Filtros/Categorías */
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap; 
+        }
+
+        .filter-btn {
+            background-color: var(--card-bg);
+            color: var(--text-secondary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+            min-width: 120px; 
+            justify-content: center;
+        }
+
+        .filter-btn:hover {
+            background-color: #3a3a50;
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+        }
+
+        /* Cuadrícula de Locales */
+        .venues-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Tarjeta de Local */
+        .venue-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            /* Transición para el efecto de movimiento y opacidad */
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out; 
+            opacity: 1; 
+            transform: translateY(0);
+        }
+
+        .venue-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Clase para ocultar permanentemente (después de la animación) */
+        .venue-card.hidden {
+            display: none;
+        }
+
+        /* Estados de Animación (Filtros) */
+        .venue-card.fade-in {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        .venue-card.showing {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .venue-card.fade-out {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        /* Estilo para el mensaje de No Resultados */
+        #noResultsMessage {
+            grid-column: 1 / -1; /* Ocupa todo el ancho en la cuadrícula */
+            text-align: center;
+            padding: 50px 0;
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            font-weight: 600;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--primary-color);
+        }
+
+
+        .card-image-container {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .card-image[onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';"] {
+            background-color: #29293e;
+            object-fit: contain;
+            filter: grayscale(50%);
+        }
+
+        .category-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: var(--text-light);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .venue-name {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+
+        .venue-location {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .venue-location i {
+            margin-right: 5px;
+        }
+        
+        /* Contenedor de detalles (inicialmente oculto) */
+        .venue-extra-details {
+            display: none; /* Inicialmente oculto */
+            margin-top: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #34344c;
+            border-radius: 8px;
+            border-left: 3px solid var(--detail-icon-color);
+            /* Animación de despliegue */
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-in, max-height 0.3s ease-in;
+        }
+        
+        /* Estado cuando los detalles están visibles */
+        .venue-extra-details.visible {
+            display: block;
+            opacity: 1;
+            max-height: 200px; /* Suficiente altura para contener el contenido */
+            transition: opacity 0.4s ease-out, max-height 0.4s ease-out;
+        }
+        
+        .detail-item {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .detail-item strong {
+            color: var(--detail-icon-color);
+            font-weight: 700;
+        }
+        
+        .detail-item i {
+            margin-right: 5px;
+            color: var(--detail-icon-color);
+        }
+        
+        /* Botones en la parte inferior de la tarjeta */
+        .venue-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .rating {
+            color: var(--rating-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .rating i {
+            margin-right: 5px;
+        }
+
+        /* Estilo del botón "Ver más" / "Ocultar" */
+        .toggle-details-btn {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .toggle-details-btn:hover {
+            background-color: #a86cc2;
+            transform: scale(1.03);
+        }
+        
+        /* Estilo del botón "Cómo llegar" */
+        .directions-btn {
+            background-color: #2ecc71; /* Un color verde brillante para acciones */
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .directions-btn:hover {
+            background-color: #27ae60;
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>RAYMI Lima</h1>
+        <div class="search-bar">
+            <input type="text" placeholder="Busca fiestas en Lima...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2 class="section-title">Elige tu vibe</h2>
+        
+        <section class="filters">
+            <button class="filter-btn active" data-filter="todos"><i class="fas fa-th"></i> Todos</button>
+            <button class="filter-btn" data-filter="discoteca"><i class="fas fa-compact-disc"></i> Discotecas</button>
+            <button class="filter-btn" data-filter="bar"><i class="fas fa-glass-martini-alt"></i> Bares</button>
+            <button class="filter-btn" data-filter="rooftop"><i class="fas fa-star"></i> Rooftops</button>
+        </section>
+
+        <section class="venues-grid" id="venuesGrid">
+
+            <!-- Card 1: Discoteca (ValeTodo Downtown) -->
+            <div class="venue-card showing" data-category="discoteca">
+                <div class="card-image-container">
+                    <img src="https://fastly.4sqi.net/img/general/320x240/78525628_RAehxTq23d3wsDsBjBpaB-PCwio_gr7IM3kzrhjCJQQ.jpg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de ValeTodo Downtown" class="card-image">
+                    <span class="category-tag">Discoteca</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">ValeTodo Downtown</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Noche Drag Queens - Sáb.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> 2x1 en Pisco Sour antes de 11 PM.</p>
+                        <a href="https://maps.google.com/?q=ValeTodo+Downtown+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.5</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Bar (Sargento Pimienta) -->
+            <div class="venue-card showing" data-category="bar">
+                <div class="card-image-container">
+                    <img src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/22/03/53/2a/espacios-amplios-y-mesas.jpg?w=1200&h=1200&s=1" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Sargento Pimienta" class="card-image">
+                    <span class="category-tag">Bar</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Sargento Pimienta</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Tributo a Soda Stereo - Vie.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> Cervezas artesanales a S/. 15.</p>
+                        <a href="https://maps.google.com/?q=Sargento+Pimienta+Rock+Bar+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+                    
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.8</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Bar (Vichama Rock Bar) -->
+            <div class="venue-card showing" data-category="bar">
+                <div class="card-image-container">
+                    <img src="https://img.restaurantguru.com/r452-interior-Vichama-Rock-Bar-2022-09.jpg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Vichama Rock Bar" class="card-image">
+                    <span class="category-tag">Bar</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Vichama Rock Bar</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Festival de Bandas Indie - Jue.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> Shot de tequila gratis c/pedido.</p>
+                        <a href="https://maps.google.com/?q=Vichama+Rock+Bar+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.8</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 4: Discoteca (Nebula Club) -->
+            <div class="venue-card showing" data-category="discoteca">
+                <div class="card-image-container">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7clrdYwQf7dmYGeJAjmFhbIPk1YyR3yf41w&s" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Nebula Club" class="card-image">
+                    <span class="category-tag">Discoteca</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Nebula Club</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Electronic Rave Night - Sáb.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> Botella de Vodka a precio especial.</p>
+                        <a href="https://maps.google.com/?q=Nebula+Club+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.6</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Bar (El Tizón) -->
+            <div class="venue-card showing" data-category="bar">
+                <div class="card-image-container">
+                    <img src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/19/52/56/ab/photo0jpg.jpg?w=1100&h=1100&s=1" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de El Tizón" class="card-image">
+                    <span class="category-tag">Bar</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">El Tizón</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Jazz & Blues Session - Dom.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> 50% dscto. en entradas.</p>
+                        <a href="https://maps.google.com/?q=El+Tizon+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.6</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 6: Bar (Cholo Art & Fun) -->
+            <div class="venue-card showing" data-category="bar">
+                <div class="card-image-container">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSUbFqfRFyDy0eSgHnXal9ZiT1rKH7AMx0r6A&s" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Cholo Art & Fun" class="card-image">
+                    <span class="category-tag">Bar</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Cholo Art & Fun</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Lima, Perú</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Karaoke Extremo - Mié.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> Combo Cerveza + Alitas S/. 35.</p>
+                        <a href="https://maps.google.com/?q=Cholo+Art+%26+Fun+Lima+Peru" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.8</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 7: Rooftop (Vista Corona) - NUEVO -->
+            <div class="venue-card showing" data-category="rooftop">
+                <div class="card-image-container">
+                    <img src="https://www.businessempresarial.com.pe/wp-content/uploads/2023/09/version-2018-88.jpg" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Vista Corona" class="card-image">
+                    <span class="category-tag">Rooftop</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Vista Corona</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> Miraflores, Lima</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Sunset Sessions DJ - Vie/Sáb.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> Bucket de Coronas 4x3 toda la noche.</p>
+                        <a href="https://maps.google.com/?q=Vista+Corona+Lima" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.7</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 8: Rooftop (Lunarbar) - NUEVO -->
+            <div class="venue-card showing" data-category="rooftop">
+                <div class="card-image-container">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTo_NxL7YonnmHY1SJ9mdKPTcMZVyfuM1QPeICRf2b09svqmj5oNPpEnt9AH3kM_XkiAcM&usqp=CAU" onerror="this.onerror=null;this.src='https://placehold.co/400x200/29293e/aaaaaa?text=Imagen+No+Disp.';" alt="Imagen de Lunarbar" class="card-image">
+                    <span class="category-tag">Rooftop</span>
+                </div>
+                <div class="card-content">
+                    <h3 class="venue-name">Lunarbar</h3>
+                    <p class="venue-location"><i class="fas fa-map-marker-alt"></i> San Isidro, Lima</p>
+                    
+                    <!-- Contenedor de Detalles Ocultos -->
+                    <div class="venue-extra-details">
+                        <p class="detail-item"><strong><i class="fas fa-calendar-alt"></i> Próximo Evento:</strong> Noche de Cócteles de Autor - Jue.</p>
+                        <p class="detail-item"><strong><i class="fas fa-tag"></i> Promoción:</strong> 15% dscto. en coctelería hasta medianoche.</p>
+                        <a href="https://maps.google.com/?q=Lunarbar+Lima" target="_blank" class="directions-btn">Cómo llegar <i class="fas fa-location-arrow"></i></a>
+                    </div>
+
+                    <div class="venue-actions">
+                        <span class="rating"><i class="fas fa-star"></i> 4.4</span>
+                        <button class="toggle-details-btn">Ver más</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje de No Resultados (oculto por defecto) -->
+            <div id="noResultsMessage" style="display: none;">
+                No se encontró nada en esta categoría.
+            </div>
+            
+        </section>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const venueCards = document.querySelectorAll('.venue-card');
+            const noResultsMessage = document.getElementById('noResultsMessage'); 
+            // Seleccionar TODOS los botones, incluyendo los de las nuevas tarjetas
+            let toggleDetailButtons = document.querySelectorAll('.toggle-details-btn');
+            const ANIMATION_DURATION = 500; 
+
+            // Función para alternar la visibilidad de los detalles de la tarjeta
+            const toggleDetails = (button) => {
+                // Obtener el contenedor de detalles de la tarjeta padre
+                const card = button.closest('.venue-card');
+                const detailsContainer = card.querySelector('.venue-extra-details');
+
+                // Alternar la clase 'visible'
+                const isVisible = detailsContainer.classList.toggle('visible');
+
+                // Actualizar el texto del botón
+                if (isVisible) {
+                    button.textContent = 'Ocultar detalles';
+                } else {
+                    button.textContent = 'Ver más';
+                }
+            };
+            
+            // Función para reasignar Event Listeners después de agregar/remover tarjetas
+            const initializeToggleListeners = () => {
+                // Selecciona TODOS los botones de nuevo (por si el DOM cambió)
+                toggleDetailButtons = document.querySelectorAll('.toggle-details-btn');
+                toggleDetailButtons.forEach(button => {
+                    // Remover listeners antiguos para evitar duplicados, luego agregar el nuevo
+                    button.removeEventListener('click', handleToggleClick); 
+                    button.addEventListener('click', handleToggleClick);
+                });
+            };
+
+            const handleToggleClick = (e) => {
+                toggleDetails(e.currentTarget);
+            };
+
+            // ----------------------------------------------------
+            // Lógica de Filtros
+            // ----------------------------------------------------
+
+            const filterVenues = (filter) => {
+                let visibleCount = 0; 
+
+                venueCards.forEach(card => {
+                    const category = card.getAttribute('data-category');
+                    const shouldShow = (filter === 'todos' || category === filter);
+
+                    if (shouldShow) {
+                        visibleCount++; 
+                        
+                        if (card.classList.contains('hidden')) {
+                            card.classList.remove('hidden', 'fade-out');
+                            card.classList.add('fade-in'); 
+                            card.style.display = 'block';
+
+                            void card.offsetHeight; 
+                            
+                            card.classList.add('showing');
+                            card.classList.remove('fade-in');
+
+                        } else {
+                            card.classList.add('showing');
+                            card.classList.remove('fade-in', 'fade-out');
+                        }
+
+                    } else {
+                        if (!card.classList.contains('hidden')) {
+                            
+                            card.classList.remove('showing', 'fade-in');
+                            card.classList.add('fade-out');
+
+                            setTimeout(() => {
+                                const currentActiveFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+                                if (currentActiveFilter !== 'todos' && category !== currentActiveFilter) {
+                                    card.classList.add('hidden');
+                                    card.classList.remove('fade-out');
+                                    card.style.display = 'none';
+                                }
+                            }, ANIMATION_DURATION);
+                        }
+                    }
+                });
+                
+                // Mostrar/Ocultar el mensaje de no resultados después de la duración de la animación
+                setTimeout(() => {
+                    if (visibleCount === 0) {
+                        noResultsMessage.style.display = 'block';
+                    } else {
+                        noResultsMessage.style.display = 'none';
+                    }
+                }, ANIMATION_DURATION);
+            };
+
+            // Event Listeners para los botones de FILTRO
+            filterButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const selectedFilter = e.currentTarget.getAttribute('data-filter');
+
+                    // 1. Actualizar el estado 'active' de los botones
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+
+                    // 2. Aplicar el filtro
+                    filterVenues(selectedFilter);
+                    
+                    // 3. Ocultar todos los detalles cuando se cambia el filtro
+                    document.querySelectorAll('.venue-extra-details.visible').forEach(detail => {
+                        detail.classList.remove('visible');
+                        // Asegura que el texto del botón se revierta
+                        const btn = detail.closest('.venue-card').querySelector('.toggle-details-btn');
+                        if (btn) btn.textContent = 'Ver más'; 
+                    });
+                });
+            });
+
+            // Inicializar los Event Listeners para los botones "Ver más"
+            initializeToggleListeners();
+
+            // Configuración inicial
+            filterVenues('todos'); 
+        });
+    </script>
+</body>
+</html>
